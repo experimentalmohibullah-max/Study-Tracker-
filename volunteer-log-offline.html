@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Volunteer Log</title>
+<style>
+:root {
+  --bg: #F6F8FC;
+  --surface: #FFFFFF;
+  --line: #E1E6F2;
+  --ink: #17203D;
+  --muted: #667090;
+  --bar-empty: #C7CEDD;
+  --green-bg: #E8F8F0; --green-line: #BDE9D2; --green-tile: #C9EEDB; --green-ink: #0F7F5A;
+  --yellow-bg: #FEF8E3; --yellow-line: #F5E2A3; --yellow-tile: #FCE7B2; --yellow-ink: #D98300;
+  --blue-bg: #ECEFFE; --blue-line: #C9D1F8; --blue-tile: #D7DBFA; --blue-ink: #4A4FD3;
+  --purple-bg: #F7F1FE; --purple-line: #E2D2F8; --purple-tile: #EBDBFB; --purple-ink: #7B2FD4;
+  --red-bg: #FDEFF1; --red-line: #F5C6CD; --red-tile: #F9D5DA; --red-ink: #B3233A;
+  --field: #FFFFFF;
+  --shadow: 0 1px 2px rgba(23,32,61,.04);
+  --display: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Bengali', Roboto, sans-serif;
+  --body: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Bengali', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1325; --surface: #161C33; --line: #2A3354; --ink: #EDF0FA; --muted: #98A2C3; --bar-empty: #3A4366;
+    --green-bg: #12302A; --green-line: #1F5A47; --green-tile: #1B4A3B; --green-ink: #5FDDAA;
+    --yellow-bg: #332A12; --yellow-line: #5C4A1B; --yellow-tile: #4A3A14; --yellow-ink: #FFC24D;
+    --blue-bg: #1B2147; --blue-line: #333D7C; --blue-tile: #2A3366; --blue-ink: #A3ABFF;
+    --purple-bg: #261A3E; --purple-line: #473070; --purple-tile: #38265A; --purple-ink: #CBA2FF;
+    --red-bg: #3A1820; --red-line: #6A2B38; --red-tile: #4D2029; --red-ink: #FF9DAD;
+    --field: #0E1325; --shadow: none; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 80px; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.4;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--blue-ink); outline-offset: 2px; }
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-top: 16px; }
+
+/* app bar */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.bar-in { max-width: 520px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { width: 40px; height: 40px; flex: none; }
+.brand b { font-family: var(--display); font-weight: 800; font-size: 26px; letter-spacing: -.02em; white-space: nowrap; }
+.brand b span { color: #C8283F; }
+.round { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--bg); display: grid; place-items: center; flex: none; padding: 0; }
+.round svg { width: 22px; height: 22px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* date row */
+.dates { display: flex; align-items: center; gap: 10px; }
+.dates .round { width: 40px; height: 40px; }
+.datebox { position: relative; flex: 1; min-width: 0; height: 40px; border-radius: 20px; background: var(--surface); border: 1.5px solid var(--line); display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 15px; }
+.datebox input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; margin-top: -6px; }
+.label { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--muted); margin: 4px 4px -6px; }
+
+/* summary */
+.sum { background: var(--purple-bg); border: 1.5px solid var(--purple-line); border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.sum-top { display: flex; align-items: center; gap: 12px; }
+.sum-tile { width: 40px; height: 40px; border-radius: 50%; background: var(--purple-tile); display: grid; place-items: center; flex: none; }
+.sum-tile svg { width: 20px; height: 20px; fill: var(--purple-ink); stroke: none; }
+.sum-title { flex: 1; min-width: 0; font-family: var(--display); font-weight: 700; color: var(--purple-ink); font-size: 17px; }
+.chip { background: var(--purple-tile); color: var(--purple-ink); border-radius: 10px; padding: 6px 12px; font-family: var(--display); font-weight: 700; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; border: 0; }
+.segs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg { height: 10px; border-radius: 5px; background: var(--purple-tile); }
+.seg.on { background: var(--purple-ink); }
+.sum-msg { font-size: 15px; color: var(--purple-ink); font-weight: 600; }
+
+/* sessions */
+.goals { background: var(--surface); border: 1.5px solid var(--line); border-radius: 26px; padding: 12px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); }
+.goal { border-radius: 20px; border: 1.5px solid; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.g-green { background: var(--green-bg); border-color: var(--green-line); --tile: var(--green-tile); --gink: var(--green-ink); }
+.g-yellow { background: var(--yellow-bg); border-color: var(--yellow-line); --tile: var(--yellow-tile); --gink: var(--yellow-ink); }
+.g-blue { background: var(--blue-bg); border-color: var(--blue-line); --tile: var(--blue-tile); --gink: var(--blue-ink); }
+.g-purple { background: var(--purple-bg); border-color: var(--purple-line); --tile: var(--purple-tile); --gink: var(--purple-ink); }
+.g-red { background: var(--red-bg); border-color: var(--red-line); --tile: var(--red-tile); --gink: var(--red-ink); }
+.goal-top { display: flex; align-items: center; gap: 14px; }
+.tile { width: 54px; height: 54px; border-radius: 16px; background: var(--tile); display: grid; place-items: center; flex: none; }
+.tile svg { width: 28px; height: 28px; stroke: var(--gink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.goal-text { flex: 1; min-width: 0; }
+.goal-text h3 { margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.goal-text p { margin: 2px 0 0; color: var(--muted); font-size: 15px; overflow-wrap: anywhere; }
+.del { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--gink); background: transparent; display: grid; place-items: center; flex: none; padding: 0; }
+.del svg { width: 20px; height: 20px; stroke: var(--gink); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.del.sure { background: var(--gink); width: auto; min-width: 44px; padding: 0 12px; border-radius: 22px; color: var(--surface); font-weight: 700; font-size: 14px; }
+.fields { display: flex; flex-wrap: wrap; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 110px; min-width: 0; }
+.field > span { font-size: 13px; color: var(--muted); font-weight: 500; }
+.field input, .field textarea { width: 100%; min-width: 0; height: 44px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--field); padding: 0 12px; font-size: 16px; }
+.field textarea { height: auto; min-height: 76px; padding: 10px 12px; resize: vertical; font-family: var(--body); }
+.field.wide { flex-basis: 100%; }
+.addbtn { min-height: 52px; border-radius: 18px; border: 1.5px dashed var(--purple-line); background: var(--purple-bg); color: var(--purple-ink); font-family: var(--display); font-weight: 700; font-size: 16px; }
+
+/* evidence */
+.ev { display: flex; flex-direction: column; gap: 8px; }
+.ev-head { font-size: 13px; color: var(--muted); font-weight: 500; }
+.thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.th { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--field); border: 1.5px solid var(--line); }
+.th img, .th video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.th .x { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(23,32,61,.75); color: #fff; font-size: 16px; line-height: 1; display: grid; place-items: center; padding: 0; }
+.th .tag { position: absolute; left: 4px; bottom: 4px; background: rgba(23,32,61,.75); color: #fff; border-radius: 6px; font-size: 11px; font-weight: 700; padding: 1px 6px; }
+.upl { min-height: 44px; border-radius: 12px; border: 1.5px solid var(--gink); color: var(--gink); background: transparent; font-weight: 700; font-size: 15px; display: grid; place-items: center; cursor: pointer; text-align: center; }
+.upl input { display: none; }
+
+/* cards */
+.card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 22px; padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 14px; }
+.week-head { display: flex; align-items: baseline; gap: 10px; }
+.week-head b { font-family: var(--display); font-size: 40px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.week-head span { color: var(--muted); font-size: 16px; }
+.bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 96px; }
+.col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; }
+.b { width: 100%; border-radius: 8px 8px 3px 3px; background: var(--bar-empty); height: 6px; }
+.b.on { background: var(--green-ink); }
+.dl { font-size: 12px; color: var(--muted); font-weight: 600; }
+.col.today .dl { color: var(--ink); }
+.col.today .b { outline: 2px solid var(--ink); outline-offset: 2px; }
+.totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tot { border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tot b { font-family: var(--display); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tot span { font-size: 13px; color: var(--muted); }
+.tot.g-green { background: var(--green-bg); } .tot.g-yellow { background: var(--yellow-bg); } .tot.g-blue { background: var(--blue-bg); }
+.orgs { display: flex; flex-direction: column; gap: 10px; }
+.org-row { display: flex; flex-direction: column; gap: 4px; }
+.org-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.org-top b { font-family: var(--display); font-weight: 700; overflow-wrap: anywhere; }
+.org-top span { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.org-bar { height: 10px; border-radius: 5px; background: var(--bar-empty); overflow: hidden; }
+.org-bar i { display: block; height: 100%; border-radius: 5px; background: var(--gink); }
+.note { width: 100%; min-height: 84px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--field); padding: 12px; font-size: 16px; resize: vertical; font-family: var(--body); }
+
+/* history */
+.hist { display: flex; flex-direction: column; gap: 10px; }
+.day { text-align: left; width: 100%; border-radius: 18px; border: 1.5px solid var(--line); background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.day.sel { outline: 2px solid var(--blue-ink); outline-offset: 1px; }
+.day-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.day-top b { font-family: var(--display); font-size: 16px; font-weight: 700; }
+.day-top span { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mini { border-radius: 9px; padding: 3px 10px; font-size: 13px; font-weight: 600; background: var(--tile); color: var(--gink); }
+.day-note { margin: 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.empty { border: 1.5px dashed var(--line); border-radius: 18px; padding: 20px 16px; color: var(--muted); text-align: center; font-size: 15px; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.btns .chip, .btns label.chip { min-height: 44px; flex: 1 1 140px; display: grid; place-items: center; text-align: center; cursor: pointer; }
+.small { color: var(--muted); font-weight: 500; font-size: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .seg, .b, .org-bar i { transition: all .18s ease; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5484D"/><stop offset="1" stop-color="#A51C30"/></linearGradient></defs>
+        <path d="M20 3l14 5v10c0 9-6 15-14 19C12 33 6 27 6 18V8z" fill="url(#lg)"/>
+        <path d="M20 26.5c-4.5-3-7-5.4-7-8.2a3.6 3.6 0 0 1 7-1.2 3.6 3.6 0 0 1 7 1.2c0 2.8-2.500 5.200-7 8.200z" fill="#fff"/>
+      </svg>
+      <b>Volunteer<span>Log</span></b>
+    </div>
+    <button class="round" id="todayBtn" type="button" aria-label="Go to today">
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+    </button>
+  </div>
+</div>
+
+<main class="wrap" id="app">
+  <div class="dates">
+    <button class="round" id="prev" type="button" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <label class="datebox"><span id="dateLabel">Today</span><input type="date" id="datePick" aria-label="Pick a date"></label>
+    <button class="round" id="next" type="button" aria-label="Next day"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <div class="status" id="status" role="status">Loading…</div>
+
+  <section class="sum" aria-live="polite">
+    <div class="sum-top">
+      <div class="sum-tile"><svg viewBox="0 0 24 24"><path d="M12 21c-5-3.400-8-6.200-8-9.600A4.200 4.200 0 0 1 12 9a4.200 4.200 0 0 1 8 2.400c0 3.400-3 6.200-8 9.600z"/></svg></div>
+      <div class="sum-title" id="sumTitle">0 sessions · 0 h</div>
+      <div class="chip" id="streak">0-day streak</div>
+    </div>
+    <div class="segs" id="segs"><div class="seg"></div><div class="seg"></div><div class="seg"></div></div>
+    <div class="sum-msg" id="sumMsg">Add a session when you finish volunteering.</div>
+  </section>
+
+  <div class="label">Sessions</div>
+  <section class="goals" id="goals" aria-label="Volunteering sessions for the day"></section>
+
+  <div class="label">Notes</div>
+  <section class="card">
+    <label for="dayNote" class="field"><span>Anything to remember about this day?</span></label>
+    <textarea class="note" id="dayNote" placeholder="Memorable moments, people you met, feedback received"></textarea>
+  </section>
+
+  <div class="label">This week</div>
+  <section class="card">
+    <div class="week-head"><b id="weekHours">0</b><span>hours in the last 7 days</span></div>
+    <div class="bars" id="bars"></div>
+    <div class="totals" id="totals"></div>
+  </section>
+
+  <div class="label">All time</div>
+  <section class="card">
+    <div class="week-head"><b id="allHours">0</b><span id="allSub">hours in total</span></div>
+    <div class="totals" id="allTotals"></div>
+    <div class="orgs" id="orgs"></div>
+  </section>
+
+  <div class="label">Saved days</div>
+  <section class="hist" id="hist"></section>
+
+  <div class="label">Backup and export</div>
+  <section class="card">
+    <div class="small">Everything is kept in this browser, including photos and videos. Save a backup file now and then in case browser data is cleared. Also keep original photos and videos in Google Drive or on your computer.</div>
+    <div class="btns">
+      <button type="button" class="chip" id="exportBtn">Save backup file</button>
+      <label class="chip">Restore from backup<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+      <button type="button" class="chip" id="csvBtn">Export log as CSV</button>
+    </div>
+    <div class="status" id="bkMsg" style="margin:0"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var COLORS = ['g-green', 'g-yellow', 'g-blue', 'g-purple', 'g-red'];
+  var DEFAULT_ORGS = ['VBD', 'BD Clean', 'Red Crescent', 'Youth Net Global', 'Youth Ending Hunger'];
+  var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var KEY = 'volunteer-log-v1';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function h(tag, props, kids) {
+    var e = document.createElement(tag);
+    for (var p in (props || {})) {
+      if (p === 'class') e.className = props[p];
+      else if (p === 'text') e.textContent = props[p];
+      else if (p === 'html') e.innerHTML = props[p];
+      else e.setAttribute(p, props[p]);
+    }
+    (kids || []).forEach(function (c) { if (c) e.appendChild(c); });
+    return e;
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parse(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function shift(s, n) { var d = parse(s); d.setDate(d.getDate() + n); return ymd(d); }
+  function pretty(s) { var d = parse(s); return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''); }
+  function num(v) { var n = parseFloat(v); return isFinite(n) && n > 0 ? n : 0; }
+  function fmt(n) { return String(Math.round(n * 100) / 100); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  /* ---------- data ---------- */
+  function blankSession() { return { id: uid(), org: '', title: '', role: '', hours: '', people: '', did: '', impact: '', verified: '', media: [] }; }
+  function normSession(o) {
+    var s = blankSession(); o = o || {};
+    ['id', 'org', 'title', 'role', 'did', 'impact', 'verified'].forEach(function (k) { if (typeof o[k] === 'string') s[k] = o[k]; });
+    s.hours = o.hours == null ? '' : o.hours; s.people = o.people == null ? '' : o.people;
+    s.media = Array.isArray(o.media) ? o.media.filter(function (m) { return m && m.id; }).map(function (m) { return { id: String(m.id), type: m.type === 'video' ? 'video' : 'image', name: String(m.name || '') }; }) : [];
+    return s;
+  }
+  function normDay(o) {
+    var d = { note: '', sessions: [] }; if (!o || typeof o !== 'object') return d;
+    d.note = typeof o.note === 'string' ? o.note : '';
+    d.sessions = Array.isArray(o.sessions) ? o.sessions.map(normSession) : [];
+    return d;
+  }
+  function hasContent(d) { return d && (d.note || d.sessions.length); }
+  function dayHours(d) { return d ? d.sessions.reduce(function (a, s) { return a + num(s.hours); }, 0) : 0; }
+  function dayPeople(d) { return d ? d.sessions.reduce(function (a, s) { return a + num(s.people); }, 0) : 0; }
+
+  var today = ymd(new Date());
+  var sel = today;
+  var days = {};
+  var orgs = DEFAULT_ORGS.slice();
+  var saveTimer = null;
+
+  function load() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+      Object.keys(raw.days || {}).forEach(function (k) { days[k] = normDay(raw.days[k]); });
+      if (Array.isArray(raw.orgs) && raw.orgs.length) orgs = raw.orgs;
+      return true;
+    } catch (e) { return false; }
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify({ days: days, orgs: orgs })); setStatus('Saved in this browser on this device'); }
+    catch (e) { setStatus("Couldn't save. Browser storage may be full or blocked."); }
+  }
+  function queueSave() { setStatus('Saving…'); clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); }
+  function flushNow() { if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; persist(); } }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) flushNow(); });
+  window.addEventListener('pagehide', flushNow);
+  function setStatus(t) { $('status').textContent = t; }
+  function ensure(date) { if (!days[date]) days[date] = normDay(); return days[date]; }
+  function allOrgs() {
+    var set = {}, out = [];
+    orgs.concat(Object.keys(days).reduce(function (a, k) { return a.concat(days[k].sessions.map(function (s) { return s.org; })); }, [])).forEach(function (o) {
+      o = (o || '').trim(); if (o && !set[o.toLowerCase()]) { set[o.toLowerCase()] = 1; out.push(o); }
+    });
+    return out;
+  }
+  function colorFor(org) {
+    var list = allOrgs(), i = list.map(function (x) { return x.toLowerCase(); }).indexOf((org || '').trim().toLowerCase());
+    return COLORS[(i < 0 ? 0 : i) % COLORS.length];
+  }
+
+  /* ---------- media (IndexedDB) ---------- */
+  var dbp = null;
+  function idb() {
+    if (dbp) return dbp;
+    dbp = new Promise(function (res, rej) {
+      if (!window.indexedDB) return rej(new Error('no idb'));
+      var r = indexedDB.open('volunteer-log-media', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('media', { keyPath: 'id' }); };
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error); };
+    });
+    return dbp;
+  }
+  function tx(mode, fn) {
+    return idb().then(function (db) {
+      return new Promise(function (res, rej) {
+        var t = db.transaction('media', mode), st = t.objectStore('media'), req = fn(st);
+        t.oncomplete = function () { res(req ? req.result : undefined); };
+        t.onerror = function () { rej(t.error); }; t.onabort = function () { rej(t.error); };
+      });
+    });
+  }
+  var mPut = function (rec) { return tx('readwrite', function (s) { return s.put(rec); }); };
+  var mGet = function (id) { return tx('readonly', function (s) { return s.get(id); }); };
+  var mDel = function (id) { return tx('readwrite', function (s) { return s.delete(id); }); };
+  var urls = {};
+  function urlFor(id) {
+    if (urls[id]) return Promise.resolve(urls[id]);
+    return mGet(id).then(function (rec) { if (!rec) return null; urls[id] = URL.createObjectURL(rec.blob); return urls[id]; });
+  }
+  function dropUrl(id) { if (urls[id]) { URL.revokeObjectURL(urls[id]); delete urls[id]; } }
+  function shrink(file) {
+    return new Promise(function (res) {
+      var u = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var max = 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
+        var c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(u);
+        c.toBlob(function (b) { res(b || file); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(u); res(file); };
+      img.src = u;
+    });
+  }
+
+  /* ---------- icons ---------- */
+  var HEART = '<path d="M12 21c-5-3.400-8-6.200-8-9.600A4.200 4.200 0 0 1 12 9a4.200 4.200 0 0 1 8 2.400c0 3.400-3 6.200-8 9.600z"/>';
+  var TRASH = '<path d="M4 7h16M9 7V4.500h6V7M6.500 7l1 13h9l1-13M10 11v5M14 11v5"/>';
+
+  /* ---------- editor ---------- */
+  function buildSessions() {
+    var root = $('goals'); root.textContent = '';
+    var d = days[sel] || normDay();
+    d.sessions.forEach(function (s) { root.appendChild(buildSession(s)); });
+    var add = h('button', { type: 'button', class: 'addbtn', text: d.sessions.length ? '+ Add another session' : '+ Add a volunteering session' });
+    add.addEventListener('click', function () {
+      ensure(sel).sessions.push(blankSession()); queueSave(); buildSessions(); renderAll();
+      var cards = root.querySelectorAll('.goal'); var last = cards[cards.length - 1];
+      if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    });
+    root.appendChild(add);
+  }
+  function buildSession(s) {
+    var cls = colorFor(s.org);
+    var title = h('h3', { text: s.org || 'New session' });
+    var sub = h('p', { text: s.title || 'Add what you did' });
+    var del = h('button', { type: 'button', class: 'del', 'aria-label': 'Delete this session', html: '<svg viewBox="0 0 24 24">' + TRASH + '</svg>' });
+    var top = h('div', { class: 'goal-top' }, [
+      h('div', { class: 'tile', html: '<svg viewBox="0 0 24 24">' + HEART + '</svg>' }),
+      h('div', { class: 'goal-text' }, [title, sub]), del
+    ]);
+    var card = h('div', { class: 'goal ' + cls }, [top]);
+
+    function field(label, key, opts) {
+      opts = opts || {};
+      var inp = opts.area ? h('textarea', { placeholder: opts.ph || '', maxlength: '1000' }) : h('input', { type: opts.type || 'text', placeholder: opts.ph || '', maxlength: '300' });
+      if (opts.type === 'number') { inp.setAttribute('inputmode', 'decimal'); inp.setAttribute('min', '0'); inp.setAttribute('step', opts.step || '1'); }
+      if (opts.list) inp.setAttribute('list', 'org-list');
+      inp.value = s[key];
+      inp.addEventListener('input', function () {
+        s[key] = inp.value;
+        if (key === 'org') { title.textContent = s.org || 'New session'; card.className = 'goal ' + colorFor(s.org); }
+        if (key === 'title') sub.textContent = s.title || 'Add what you did';
+        queueSave(); renderAll();
+      });
+      return h('label', { class: 'field' + (opts.wide ? ' wide' : '') }, [h('span', { text: label }), inp]);
+    }
+    var fields = h('div', { class: 'fields' }, [
+      field('Organization', 'org', { wide: true, list: true, ph: 'Choose or type a name' }),
+      field('Activity or event', 'title', { wide: true, ph: 'e.g. Blood donation camp' }),
+      field('Hours', 'hours', { type: 'number', step: '0.25', ph: '0' }),
+      field('People helped or reached', 'people', { type: 'number', ph: '0' }),
+      field('My role', 'role', { wide: true, ph: 'e.g. Team lead, volunteer' }),
+      field('What I did', 'did', { wide: true, area: true, ph: 'Specific tasks you did' }),
+      field('Impact and results', 'impact', { wide: true, area: true, ph: 'Use numbers: people served, items collected, money raised' }),
+      field('Verified by (name and contact)', 'verified', { wide: true, ph: 'Supervisor or organizer' })
+    ]);
+    card.appendChild(fields);
+
+    /* evidence */
+    var thumbs = h('div', { class: 'thumbs' });
+    var head = h('div', { class: 'ev-head', text: 'Photos and videos as proof' });
+    var inp = h('input', { type: 'file', accept: 'image/*,video/*', multiple: 'multiple' });
+    var upl = h('label', { class: 'upl' }, [document.createTextNode('+ Add photos or videos'), inp]);
+    var ev = h('div', { class: 'ev' }, [head, thumbs, upl]);
+    card.appendChild(ev);
+    function paintThumbs() {
+      thumbs.textContent = '';
+      thumbs.style.display = s.media.length ? '' : 'none';
+      s.media.forEach(function (m) {
+        var box = h('div', { class: 'th' });
+        var x = h('button', { type: 'button', class: 'x', 'aria-label': 'Remove file', text: '×' });
+        x.addEventListener('click', function () {
+          if (!window.confirm('Remove this file from the log?')) return;
+          s.media = s.media.filter(function (k) { return k.id !== m.id; });
+          dropUrl(m.id); mDel(m.id).catch(function () {});
+          queueSave(); paintThumbs(); renderAll();
+        });
+        box.appendChild(x);
+        urlFor(m.id).then(function (u) {
+          if (!u) { box.insertBefore(h('div', { class: 'tag', text: 'missing' }), x); return; }
+          var el = m.type === 'video' ? h('video', { src: u, controls: 'controls', preload: 'metadata', playsinline: 'playsinline' }) : h('img', { src: u, alt: m.name || 'Evidence photo', loading: 'lazy' });
+          box.insertBefore(el, x);
+          if (m.type === 'video') box.appendChild(h('span', { class: 'tag', text: 'Video' }));
+        }).catch(function () {});
+        thumbs.appendChild(box);
+      });
+    }
+    inp.addEventListener('change', function () {
+      var files = Array.prototype.slice.call(inp.files || []); inp.value = '';
+      if (!files.length) return;
+      setStatus('Adding ' + files.length + (files.length === 1 ? ' file…' : ' files…'));
+      files.reduce(function (p, f) {
+        return p.then(function () {
+          var isVid = /^video\//.test(f.type), isImg = /^image\//.test(f.type);
+          if (!isVid && !isImg) return;
+          return (isImg ? shrink(f) : Promise.resolve(f)).then(function (blob) {
+            var id = uid();
+            return mPut({ id: id, blob: blob, name: f.name }).then(function () { s.media.push({ id: id, type: isVid ? 'video' : 'image', name: f.name }); });
+          });
+        });
+      }, Promise.resolve()).then(function () { queueSave(); paintThumbs(); renderAll(); })
+        .catch(function () { setStatus("Couldn't store the file. Browser storage may be full or blocked."); });
+    });
+    paintThumbs();
+
+    var armed = false, t = null;
+    del.addEventListener('click', function () {
+      if (!armed) {
+        armed = true; del.classList.add('sure'); del.textContent = 'Tap to delete';
+        t = setTimeout(function () { armed = false; del.classList.remove('sure'); del.innerHTML = '<svg viewBox="0 0 24 24">' + TRASH + '</svg>'; }, 3000);
+        return;
+      }
+      clearTimeout(t);
+      var d = ensure(sel);
+      d.sessions = d.sessions.filter(function (k) { return k.id !== s.id; });
+      s.media.forEach(function (m) { dropUrl(m.id); mDel(m.id).catch(function () {}); });
+      queueSave(); buildSessions(); renderAll();
+    });
+    return card;
+  }
+  function fillEditor() { buildSessions(); $('dayNote').value = (days[sel] || normDay()).note; }
+  $('dayNote').addEventListener('input', function () { ensure(sel).note = $('dayNote').value; queueSave(); renderAll(); });
+
+  /* ---------- summaries ---------- */
+  function streakFor() {
+    var s = today;
+    if (!(days[s] && days[s].sessions.length)) s = shift(s, -1);
+    var n = 0;
+    while (days[s] && days[s].sessions.length) { n++; s = shift(s, -1); }
+    return n;
+  }
+  function renderSummary() {
+    var d = days[sel], n = d ? d.sessions.length : 0, hrs = dayHours(d);
+    $('sumTitle').textContent = (sel === today ? 'Today: ' : pretty(sel) + ': ') + n + (n === 1 ? ' session' : ' sessions') + ' · ' + fmt(hrs) + ' h';
+    var segs = $('segs').children;
+    for (var i = 0; i < 3; i++) segs[i].classList.toggle('on', i < n);
+    $('streak').textContent = streakFor() + '-day streak';
+    $('sumMsg').textContent = n === 0 ? 'Add a session when you finish volunteering.' : n + (n === 1 ? ' session' : ' sessions') + ' logged · ' + fmt(dayPeople(d)) + ' people reached.';
+    $('dateLabel').textContent = sel === today ? 'Today · ' + pretty(sel) : pretty(sel);
+    $('datePick').value = sel;
+  }
+  function renderWeek() {
+    var bars = $('bars'); bars.textContent = '';
+    var tot = 0, ppl = 0, ses = 0, vals = [];
+    for (var i = 6; i >= 0; i--) { var date = shift(today, -i), d = days[date]; vals.push([date, dayHours(d), i]); }
+    var max = Math.max.apply(null, vals.map(function (v) { return v[1]; }).concat([1]));
+    vals.forEach(function (v) {
+      var d = days[v[0]]; tot += v[1]; ppl += dayPeople(d); ses += d ? d.sessions.length : 0;
+      var b = h('div', { class: 'b' + (v[1] > 0 ? ' on' : ''), title: pretty(v[0]) + ': ' + fmt(v[1]) + ' h' });
+      if (v[1] > 0) b.style.height = Math.max(14, Math.round(v[1] / max * 72)) + 'px';
+      bars.appendChild(h('div', { class: 'col' + (v[2] === 0 ? ' today' : '') }, [b, h('div', { class: 'dl', text: DAYS[parse(v[0]).getDay()].slice(0, 2) })]));
+    });
+    $('weekHours').textContent = fmt(tot);
+    var t = $('totals'); t.textContent = '';
+    [['g-green', fmt(tot), 'hours'], ['g-yellow', fmt(ppl), 'people reached'], ['g-blue', String(ses), 'sessions']].forEach(function (x) {
+      t.appendChild(h('div', { class: 'tot ' + x[0] }, [h('b', { text: x[1] }), h('span', { text: x[2] })]));
+    });
+  }
+  function renderAll_() {
+    var hrs = 0, ses = 0, dcount = 0, ppl = 0, ev = 0, byOrg = {};
+    Object.keys(days).forEach(function (k) {
+      var d = days[k]; if (!d.sessions.length) return; dcount++;
+      d.sessions.forEach(function (s) {
+        hrs += num(s.hours); ses++; ppl += num(s.people); ev += s.media.length;
+        var o = (s.org || '').trim() || 'No organization'; byOrg[o] = (byOrg[o] || 0) + num(s.hours);
+      });
+    });
+    $('allHours').textContent = fmt(hrs);
+    $('allSub').textContent = 'hours in ' + ses + (ses === 1 ? ' session' : ' sessions') + ' on ' + dcount + (dcount === 1 ? ' day' : ' days');
+    var t = $('allTotals'); t.textContent = '';
+    [['g-green', fmt(ppl), 'people reached'], ['g-yellow', String(Object.keys(byOrg).length), 'organizations'], ['g-blue', String(ev), 'photos and videos']].forEach(function (x) {
+      t.appendChild(h('div', { class: 'tot ' + x[0] }, [h('b', { text: x[1] }), h('span', { text: x[2] })]));
+    });
+    var root = $('orgs'); root.textContent = '';
+    var keys = Object.keys(byOrg).sort(function (a, b) { return byOrg[b] - byOrg[a]; });
+    var max = Math.max.apply(null, keys.map(function (k) { return byOrg[k]; }).concat([1]));
+    keys.forEach(function (k) {
+      var bar = h('div', { class: 'org-bar' }, [h('i', { style: 'width:' + Math.round(byOrg[k] / max * 100) + '%' })]);
+      root.appendChild(h('div', { class: 'org-row ' + colorFor(k) }, [h('div', { class: 'org-top' }, [h('b', { text: k }), h('span', { text: fmt(byOrg[k]) + ' h' })]), bar]));
+    });
+  }
+  function renderHistory() {
+    var root = $('hist'); root.textContent = '';
+    var keys = Object.keys(days).filter(function (k) { return hasContent(days[k]); }).sort().reverse().slice(0, 150);
+    if (!keys.length) { root.appendChild(h('div', { class: 'empty', text: 'No saved days yet. Add a session above and it will appear here.' })); return; }
+    keys.forEach(function (k) {
+      var d = days[k], chips = h('div', { class: 'chips' });
+      d.sessions.forEach(function (s) {
+        chips.appendChild(h('span', { class: 'mini ' + colorFor(s.org), text: (s.org || 'Session') + (num(s.hours) ? ' · ' + fmt(num(s.hours)) + ' h' : '') }));
+      });
+      var kids = [h('div', { class: 'day-top' }, [h('b', { text: k === today ? 'Today · ' + pretty(k) : pretty(k) }), h('span', { text: fmt(dayHours(d)) + ' h' })]), chips];
+      var bits = d.sessions.map(function (s) { return s.title; }).filter(Boolean);
+      if (d.note) bits.push(d.note);
+      if (bits.length) kids.push(h('p', { class: 'day-note', text: bits.join(' · ').slice(0, 200) }));
+      var b = h('button', { type: 'button', class: 'day' + (k === sel ? ' sel' : '') }, kids);
+      b.addEventListener('click', function () { go(k); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+      root.appendChild(b);
+    });
+  }
+  function renderOrgList() {
+    var dl = $('org-list'); if (!dl) { dl = h('datalist', { id: 'org-list' }); document.body.appendChild(dl); }
+    dl.textContent = ''; allOrgs().forEach(function (o) { dl.appendChild(h('option', { value: o })); });
+  }
+  function renderAll() { renderSummary(); renderWeek(); renderAll_(); renderHistory(); renderOrgList(); }
+  function go(date) { if (!date) return; sel = date; fillEditor(); renderAll(); }
+  $('prev').addEventListener('click', function () { go(shift(sel, -1)); });
+  $('next').addEventListener('click', function () { go(shift(sel, 1)); });
+  $('todayBtn').addEventListener('click', function () { go(today); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  $('datePick').addEventListener('change', function (e) { go(e.target.value); });
+
+  /* ---------- backup ---------- */
+  function download(name, blob) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+  function blobToData(b) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = rej; r.readAsDataURL(b); }); }
+  $('exportBtn').addEventListener('click', function () {
+    $('bkMsg').textContent = 'Preparing backup…';
+    var ids = [];
+    Object.keys(days).forEach(function (k) { days[k].sessions.forEach(function (s) { s.media.forEach(function (m) { ids.push(m); }); }); });
+    var media = {};
+    ids.reduce(function (p, m) {
+      return p.then(function () { return mGet(m.id).then(function (rec) { if (!rec) return; return blobToData(rec.blob).then(function (d) { media[m.id] = { name: rec.name, data: d }; }); }); });
+    }, Promise.resolve()).then(function () {
+      download('volunteer-log-backup-' + today + '.json', new Blob([JSON.stringify({ version: 1, days: days, orgs: orgs, media: media })], { type: 'application/json' }));
+      $('bkMsg').textContent = 'Backup file saved to your downloads.';
+    }).catch(function () { $('bkMsg').textContent = "Couldn't read some photos or videos. Try again."; });
+  });
+  $('importFile').addEventListener('change', function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var o = JSON.parse(r.result), n = 0, media = o.media || {}, src = o.days || {};
+        var jobs = [];
+        Object.keys(src).forEach(function (k) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+          days[k] = normDay(src[k]); n++;
+          days[k].sessions.forEach(function (s) {
+            s.media = s.media.filter(function (m) { return media[m.id]; });
+            s.media.forEach(function (m) {
+              jobs.push(fetch(media[m.id].data).then(function (x) { return x.blob(); }).then(function (b) { return mPut({ id: m.id, blob: b, name: media[m.id].name }); }));
+            });
+          });
+        });
+        if (Array.isArray(o.orgs)) o.orgs.forEach(function (x) { if (orgs.indexOf(x) < 0) orgs.push(x); });
+        Promise.all(jobs).then(function () { persist(); fillEditor(); renderAll(); $('bkMsg').textContent = 'Restored ' + n + ' days.'; })
+          .catch(function () { $('bkMsg').textContent = "Restored the text, but some photos or videos couldn't be stored."; persist(); fillEditor(); renderAll(); });
+      } catch (err) { $('bkMsg').textContent = "That file isn't a volunteer log backup."; }
+    };
+    r.readAsText(f); e.target.value = '';
+  });
+  $('csvBtn').addEventListener('click', function () {
+    var rows = [['Date', 'Organization', 'Activity', 'Role', 'Hours', 'People reached', 'What I did', 'Impact and results', 'Verified by', 'Photos/videos']];
+    Object.keys(days).sort().forEach(function (k) {
+      days[k].sessions.forEach(function (s) { rows.push([k, s.org, s.title, s.role, s.hours, s.people, s.did, s.impact, s.verified, s.media.length]); });
+    });
+    var csv = rows.map(function (r) { return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
+    download('volunteer-log-' + today + '.csv', new Blob(['\ufeff' + csv], { type: 'text/csv' }));
+    $('bkMsg').textContent = 'CSV saved. Open it in Excel or Google Sheets.';
+  });
+
+  /* ---------- start ---------- */
+  var ok = load();
+  fillEditor(); renderAll();
+  setStatus(ok ? 'Saved in this browser on this device' : "Browser storage is blocked, so entries can't be saved here.");
+  if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function () {}); }
+})();
+</script>
+</body>
+</html>
